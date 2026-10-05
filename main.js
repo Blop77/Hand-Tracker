@@ -1,4 +1,5 @@
 import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+import * as sfx from "./sfx.js";
 
 const TASKS = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 const MODEL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
@@ -129,7 +130,7 @@ function update(dt) {
              life: rnd(0.4, 0.9), size: rnd(1.4, 3.2), h: rnd(352, 372) % 360, l: rnd(55, 80), drag: 3 });
     }
     red.ring -= dt;
-    if (red.ring <= 0) { red.ring = 0.42; rings.push({ x: red.cx, y: red.cy, r: red.r, max: red.r * 6, life: 0.7, max_l: 0.7, c: "255,70,60", w: 3 }); }
+    if (red.ring <= 0) { red.ring = 0.42; rings.push({ x: red.cx, y: red.cy, r: red.r, max: red.r * 6, life: 0.7, max_l: 0.7, c: "255,70,60", w: 3 }); sfx.crackle(); }
   }
 
   updateDomain(dt, s);
@@ -172,7 +173,7 @@ function updatePurple(dt) {
     }
     if (P.charge >= 1) {
       P.st = "ready"; P.armed = 0; P.lost = 0; P.hist = []; P.sim = hands.length < 2;
-      flash = 0.85; shake = 16;
+      flash = 0.85; shake = 16; sfx.fuse();
       burst(P.x, P.y, 160, 260, 300, 900);
       rings.push({ x: P.x, y: P.y, r: P.r, max: P.r * 10, life: 0.8, max_l: 0.8, c: "200,120,255", w: 6 });
     }
@@ -197,7 +198,7 @@ function updatePurple(dt) {
     }
     const open = hands.some(h => h.g === "open");
     if (P.armed > 0.5 && (open || sep > thr * 2.4 || keys[" "] || (P.sim && P.armed > 4))) firePurple();
-    else if (P.lost > 1.2) { P.st = "idle"; P.charge = 0; P.cd = 1; burst(P.x, P.y, 80, 260, 300, 400); }
+    else if (P.lost > 1.2) { P.st = "idle"; P.charge = 0; P.cd = 1; burst(P.x, P.y, 80, 260, 300, 400); sfx.fizzle(); }
   } else if (P.st === "fired") {
     P.x += P.vx * dt; P.y += P.vy * dt;
     P.beam.x1 = P.x; P.beam.y1 = P.y;
@@ -219,16 +220,16 @@ function firePurple() {
   if (sp < 250) { dx = P.x < W / 2 ? 1 : -1; dy = 0; } else { const l = Math.hypot(dx, dy); dx /= l; dy /= l; }
   P.vx = dx * 2400; P.vy = dy * 2400; P.st = "fired";
   P.beam = { x0: P.x, y0: P.y, x1: P.x, y1: P.y, w: P.r * 1.7, a: 1, fade: false };
-  shake = 34; flash = 0.7;
+  shake = 34; flash = 0.7; sfx.fire();
   rings.push({ x: P.x, y: P.y, r: P.r, max: P.r * 14, life: 0.9, max_l: 0.9, c: "220,160,255", w: 10 });
 }
 
 function startDomain(x, y) {
   Object.assign(D, { active: true, t: 0, ox: x, oy: y, hold: 0, fist: 0 });
-  flash = 1; shake = 26;
+  flash = 1; shake = 26; sfx.domainStart();
   for (let i = 0; i < 4; i++) rings.push({ x, y, r: 10 + i * 40, max: Math.hypot(W, H), life: 1.2 + i * 0.25, max_l: 1.2 + i * 0.25, c: "255,255,255", w: 4 });
 }
-function endDomain() { D.active = false; D.cd = 2; flash = 0.9; shake = 18; }
+function endDomain() { D.active = false; D.cd = 2; flash = 0.9; shake = 18; sfx.domainEnd(); }
 
 function updateDomain(dt, s) {
   if (D.cd > 0) D.cd -= dt;
@@ -500,6 +501,13 @@ function frame() {
   const now = performance.now() / 1000, dt = Math.min(0.05, now - last); last = now; time += dt;
   try { detect(); } catch (e) { console.error(e); }
   update(dt); render(dt); hud();
+  const hid = purple.st === "ready" || purple.st === "fired";
+  sfx.update({
+    blue: hid ? 0 : blue.p, red: hid ? 0 : red.p,
+    purple: purple.st === "charging" ? purple.charge : hid ? 1 : 0,
+    pitch: purple.st === "charging" ? 120 + purple.charge * 500 : purple.st === "fired" ? 320 : 200 + Math.sin(time * 6) * 15,
+    domain: D.k,
+  }, dt);
   requestAnimationFrame(frame);
 }
 
@@ -510,18 +518,28 @@ addEventListener("keydown", e => {
   if (k === " ") e.preventDefault();
   if (k === "d" && !e.repeat) { if (D.active) endDomain(); else startDomain(mouse.x, mouse.y); }
   if (k === "h" && !e.repeat) showSkel = !showSkel;
+  if (k === "m" && !e.repeat) toggleMute();
   keys[k] = true;
 });
 addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
 addEventListener("pointermove", e => { mouse.x = e.clientX; mouse.y = e.clientY; });
 
 const msg = document.getElementById("msg");
+const muteBtn = document.getElementById("mute");
+function toggleMute() {
+  sfx.setMuted(!sfx.isMuted());
+  muteBtn.textContent = sfx.isMuted() ? "🔇" : "🔊";
+}
+muteBtn.onclick = () => { sfx.init(); toggleMute(); };
 function begin() {
+  sfx.init();
   document.getElementById("start").style.display = "none";
   document.getElementById("hud").classList.remove("hidden");
+  muteBtn.style.display = "block";
 }
 document.getElementById("nocam").onclick = begin;
 document.getElementById("go").onclick = async () => {
+  sfx.init(); // must happen inside the click so the browser allows audio
   msg.className = ""; msg.textContent = "Requesting camera…";
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720, facingMode: "user" }, audio: false });

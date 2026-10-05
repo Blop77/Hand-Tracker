@@ -61,6 +61,7 @@
 | `Space` | Fire Hollow Purple |
 | `D` | Toggle Domain Expansion |
 | `H` | Show / hide the hand skeleton and gesture labels |
+| `M` | Mute / unmute sound (or click 🔊 in the top-right corner) |
 | `Tab` | Show / hide the help panel |
 
 ---
@@ -130,7 +131,8 @@ flowchart LR
 - **Tracking:** [MediaPipe Tasks Vision](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker) finds 21 landmarks per hand, up to two hands, on the GPU.
 - **Gestures:** each finger counts as extended if its tip is farther from the wrist than its middle joint. That combination maps to point / peace / crossed / fist / open.
 - **Effects:** a hand-written Canvas 2D engine draws additive-blended glows, a particle system, procedural lightning, a lens that warps your camera image, and the Infinite Void scene.
-- **No build step, no dependencies to install:** just `index.html` and `main.js`.
+- **Sound:** every effect is synthesized live with the Web Audio API from oscillators, filtered noise and envelopes. There are no audio files. Blue hums, Red crackles, Hollow Purple whines as it charges and booms when it fires, and the Infinite Void plays a shimmering chord.
+- **No build step, no dependencies to install:** just `index.html`, `main.js` and `sfx.js`.
 
 ---
 
@@ -148,6 +150,7 @@ Then open **http://localhost:8000**. Use `localhost` rather than the `[::]` addr
 Hand-Tracker/
 ├── index.html   # page layout, help panel, start screen
 ├── main.js      # tracking, gestures, effects engine
+├── sfx.js       # synthesized sound effects (Web Audio)
 └── README.md
 ```
 
@@ -158,7 +161,7 @@ Hand-Tracker/
 - [x] Blue, Red, Hollow Purple
 - [x] Domain Expansion: Infinite Void
 - [x] Keyboard / mouse mode
-- [ ] Sound effects
+- [x] Sound effects
 - [ ] Record and download a clip of your cast
 - [ ] More sorcerers (Sukuna's Malevolent Shrine, Megumi's Ten Shadows…)
 

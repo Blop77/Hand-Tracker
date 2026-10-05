@@ -34,6 +34,8 @@
          cursor:pointer;letter-spacing:.12em;text-transform:uppercase;transition:all .2s}
   button:hover{background:rgba(255,255,255,.1);box-shadow:0 0 24px rgba(120,160,255,.5)}
   button.ghost{border-color:transparent;color:var(--dim);font-size:12px;padding:6px 12px}
+  #mute{display:none;position:fixed;top:14px;right:14px;width:44px;height:44px;padding:0;font-size:18px;background:var(--glass);
+        backdrop-filter:blur(10px);border-color:rgba(255,255,255,.15)}
   #msg{min-height:1.4em;color:var(--dim);font-size:13px}
   #msg.err{color:#ff8a8a}
 </style>
@@ -48,8 +50,10 @@
   <div class="row"><div class="ico">✌️</div><div><b class="c-red">Red</b> — peace sign, fingers spread</div></div>
   <div class="row"><div class="ico">🙌</div><div><b class="c-purple">Hollow Purple</b> — Blue on one hand, Red on the other, bring them together. Open a palm or pull hands apart to fire.</div></div>
   <div class="row"><div class="ico">🤞</div><div><b class="c-dom">Domain Expansion</b> — cross index + middle, hold ~½s. Make a fist to end.</div></div>
-  <div class="k">No camera? Hold <b>B</b> / <b>R</b> (both = Purple, <b>Space</b> fires), <b>D</b> domain, <b>H</b> skeleton, <b>Tab</b> hide panel.</div>
+  <div class="k">No camera? Hold <b>B</b> / <b>R</b> (both = Purple, <b>Space</b> fires), <b>D</b> domain, <b>H</b> skeleton, <b>M</b> mute, <b>Tab</b> hide panel.</div>
 </div>
+
+<button id="mute" title="Mute / unmute (M)">🔊</button>
 
 <div id="chips">
   <div class="chip blue" data-k="blue">Blue</div>
